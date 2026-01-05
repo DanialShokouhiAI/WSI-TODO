@@ -1,53 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html dir="rtl">
 <head>
-    <title>تسک‌لیست تیمی</title>
+    <title>IT Health Dashboard</title>
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        body { font-family: Tahoma; direction: rtl; padding: 20px; background: #f4f4f4; }
-        #task-container { background: white; padding: 20px; border-radius: 8px; max-width: 400px; margin: auto; }
-        input { width: 80%; padding: 10px; }
-        button { padding: 10px; cursor: pointer; }
-        ul { list-style: none; padding: 0; }
-        li { background: #eee; margin: 5px 0; padding: 10px; display: flex; justify-content: space-between; }
+        body { font-family: 'Segoe UI', Tahoma; background: #1a1a2e; color: white; text-align: center; }
+        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 50px; }
+        .card { width: 200px; padding: 20px; border-radius: 15px; background: #16213e; border: 2px solid #0f3460; transition: 0.3s; }
+        .online { border-color: #00ff41; box-shadow: 0 0 10px #00ff41; }
+        .offline { border-color: #e94560; box-shadow: 0 0 10px #e94560; }
+        .status-dot { height: 15px; width: 15px; border-radius: 50%; display: inline-block; margin-left: 10px; }
+        .bg-online { background-color: #00ff41; }
+        .bg-offline { background-color: #e94560; }
     </style>
 </head>
 <body>
-    <div id="task-container">
-        <h3>لیست کارهای شرکت</h3>
-        <input type="text" id="taskInput" placeholder="تسک جدید...">
-        <button onclick="addTask()">افزودن</button>
-        <ul id="taskList"></ul>
-    </div>
+    <h1>داشبورد مانیتورینگ سلامت IT</h1>
+    <div id="board" class="container"></div>
 
     <script>
         const socket = io();
-        const taskList = document.getElementById('taskList');
+        const board = document.getElementById('board');
 
-        function addTask() {
-            const text = document.getElementById('taskInput').value;
-            if(text) {
-                socket.emit('add-task', text);
-                document.getElementById('taskInput').value = '';
-            }
-        }
-
-        socket.on('init', (tasks) => {
-            tasks.forEach(renderTask);
+        socket.on('status-update', (systems) => {
+            board.innerHTML = '';
+            systems.forEach(sys => {
+                const card = document.createElement('div');
+                card.className = `card ${sys.status}`;
+                card.innerHTML = `
+                    <h3>${sys.name}</h3>
+                    <p>${sys.host}</p>
+                    <span class="status-dot bg-${sys.status}"></span>
+                    <span>${sys.status === 'online' ? 'آنلاین' : 'قطع'}</span>
+                `;
+                board.appendChild(card);
+            });
         });
-
-        socket.on('task-added', renderTask);
-
-        socket.on('task-deleted', (id) => {
-            document.getElementById(id).remove();
-        });
-
-        function renderTask(task) {
-            const li = document.createElement('li');
-            li.id = task.id;
-            li.innerHTML = `${task.text} <button onclick="socket.emit('delete-task', ${task.id})">حذف</button>`;
-            taskList.appendChild(li);
-        }
     </script>
 </body>
 </html>
