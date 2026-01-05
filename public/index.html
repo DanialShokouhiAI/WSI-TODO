@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>تسک‌لیست تیمی</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { font-family: Tahoma; direction: rtl; padding: 20px; background: #f4f4f4; }
+        #task-container { background: white; padding: 20px; border-radius: 8px; max-width: 400px; margin: auto; }
+        input { width: 80%; padding: 10px; }
+        button { padding: 10px; cursor: pointer; }
+        ul { list-style: none; padding: 0; }
+        li { background: #eee; margin: 5px 0; padding: 10px; display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+    <div id="task-container">
+        <h3>لیست کارهای شرکت</h3>
+        <input type="text" id="taskInput" placeholder="تسک جدید...">
+        <button onclick="addTask()">افزودن</button>
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        const socket = io();
+        const taskList = document.getElementById('taskList');
+
+        function addTask() {
+            const text = document.getElementById('taskInput').value;
+            if(text) {
+                socket.emit('add-task', text);
+                document.getElementById('taskInput').value = '';
+            }
+        }
+
+        socket.on('init', (tasks) => {
+            tasks.forEach(renderTask);
+        });
+
+        socket.on('task-added', renderTask);
+
+        socket.on('task-deleted', (id) => {
+            document.getElementById(id).remove();
+        });
+
+        function renderTask(task) {
+            const li = document.createElement('li');
+            li.id = task.id;
+            li.innerHTML = `${task.text} <button onclick="socket.emit('delete-task', ${task.id})">حذف</button>`;
+            taskList.appendChild(li);
+        }
+    </script>
+</body>
+</html>
